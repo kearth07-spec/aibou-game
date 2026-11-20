@@ -192,8 +192,10 @@ input{font-family:inherit;font-size:18px;color:var(--ink)}
 #bubble.on{opacity:1;transform:none;pointer-events:auto}
 #bubble .say{font-size:22px}
 #bubble.big .say{font-size:30px}
-#prompt{position:absolute;left:12px;right:12px;bottom:10px;z-index:7;display:flex;justify-content:center;gap:14px}
-#prompt .btn{min-width:120px;min-height:84px;padding:0 12px}
+#prompt{position:absolute;left:calc(var(--sl) + 16px);right:calc(var(--sr) + 16px);bottom:calc(var(--sb) + 12px);z-index:7;display:flex;justify-content:center;gap:12px}
+#prompt:empty{display:none}
+#s4.has-prompt #care{opacity:0;pointer-events:none}
+#prompt .btn{flex:1;max-width:220px;min-height:92px;padding:0 12px}
 #prompt .btn.main{background:var(--accent);color:#fff;box-shadow:0 5px 0 #d9713f}
 
 .sheet{position:absolute;left:0;right:0;bottom:0;z-index:12;background:#fff;border-radius:28px 28px 0 0;
@@ -385,7 +387,6 @@ input{font-family:inherit;font-size:18px;color:var(--ink)}
     <div id="taps" class="layer"></div>
     <div id="counter"></div>
     <div id="bubble" class="line"><span class="say"></span><button class="spk" aria-label="よみあげ"></button></div>
-    <div id="prompt"></div>
     <div id="fader"></div>
   </div>
   <nav id="care">
@@ -394,6 +395,7 @@ input{font-family:inherit;font-size:18px;color:var(--ink)}
     <button class="btn" data-act="wash" data-lock="500" data-care="wash"><span class="ic">🛁</span>きれい</button>
     <button class="btn" data-act="sleep" data-lock="500" data-care="sleep"><span class="ic" id="sleepIc">🌙</span><span id="sleepLb">ねんね</span></button>
   </nav>
+  <div id="prompt"></div>
   <div id="picker" class="sheet">
     <div class="line"><span class="say">どれを あげる？</span><button class="spk" aria-label="よみあげ"></button><button class="close" data-act="pickerClose">✕</button></div>
     <div class="row" id="foodRow"></div>
@@ -1042,10 +1044,10 @@ function say(text,opt={}){
 }
 function hideBubble(){clearTimeout(bubbleTimer);$('#bubble').classList.remove('on')}
 function showPrompt(items){
-  const p=$('#prompt');p.innerHTML='';
+  const p=$('#prompt');p.innerHTML='';$('#s4').classList.add('has-prompt');
   items.forEach((it,i)=>{const b=document.createElement('button');b.className='btn'+(i===0&&items.length>1?' main':'');b.innerHTML=`<span class="ic">${it.ic}</span>${it.t}`;b._fn=it.fn;b.dataset.act='prompt';p.appendChild(b)});
 }
-const clearPrompt=()=>{$('#prompt').innerHTML=''};
+const clearPrompt=()=>{$('#prompt').innerHTML='';$('#s4').classList.remove('has-prompt')};
 
 /* ---------- 状態（おなか・きもち・きれいさ） ---------- */
 function applyDecay(t){
@@ -1730,7 +1732,7 @@ async function startOuting(k){
   say(L('go'));b.setGear(true);Snd.play('happy');
   await b.play('greet');
   await b.moveTo(app.stageW+b.W*.7,0,b.W*1.5);
-  await fade(()=>{Scene.build(k);app.outing=k;$('#care').classList.add('gone')});
+  await fade(()=>{Scene.build(k);app.outing=k});
   b.pos.x=-b.W*.7;b.pos.y=0;
   await b.moveTo(app.stageW*.5,0,b.W*1.2);
   recordStamp(k);say(PLACE_LINE[k]||'');Snd.play('chime');burst(roomPool,'spark',b.pos.x,b.headY(),5);
@@ -1743,7 +1745,7 @@ async function endOuting(){
   app.outingReady=false;clearPrompt();
   const b=buddy;b.interrupt();say('そろそろ かえろう');
   await b.moveTo(-b.W*.7,0,b.W*1.5);
-  await fade(()=>{Scene.clear();app.outing=null;setTodVisual();$('#care').classList.remove('gone')});
+  await fade(()=>{Scene.clear();app.outing=null;setTodVisual()});
   b.pos.x=app.stageW+b.W*.7;b.pos.y=0;
   await b.moveTo(app.stageW*.5,0,b.W*1.3);
   say(L('back'));Snd.play('happy');burst(roomPool,'heart',b.pos.x,b.headY(),5);addStat('kimochi',30);
